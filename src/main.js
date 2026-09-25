@@ -15,7 +15,7 @@ const STEP = 1 / FRAME_HZ;
 const LEVELS = [
   { name: 'NORMAL    ', speed: 1 },
   { name: 'EASY      ', speed: 0.7, gentle: true },
-  { name: 'SUPER EASY', speed: 0.55, gentle: true, invincible: true, endless: true },
+  { name: 'SUPER EASY', speed: 0.55, gentle: true, invincible: true },
 ];
 const MAX_CATCHUP = 0.1;
 const STORE = 'dk.';
@@ -41,6 +41,7 @@ async function main() {
   const touch = new Touch(document.getElementById('touch'));
 
   let level = Math.min(2, Number(store.get('level', 0)) || 0);
+  let endless = store.get('endless', '0') === '1';
   let highScore = Number(store.get('highscore', 7650));
   let mode = 'title';           // title | game
   let paused = false;
@@ -50,14 +51,24 @@ async function main() {
   let acc = 0, last = performance.now();
 
   touch.setLevel(level);
+  touch.setLives(endless);
   touch.onPanelToggle = (open) => { if (mode === 'game') paused = open; };
   touch.onLevel = (n) => setLevel(n);
+  touch.onLives = (on) => setEndless(on);
 
   function setLevel(n) {
     level = n;
     store.set('level', n);
     touch.setLevel(n);
     if (game) { applyAssists(); if (n) assisted = true; }
+    drawTitleText();
+  }
+
+  function setEndless(on) {
+    endless = on;
+    store.set('endless', on ? 1 : 0);
+    touch.setLives(on);
+    if (on && game) assisted = true;
     drawTitleText();
   }
 
@@ -119,6 +130,7 @@ async function main() {
     text(t, 1, 4, tapping ? '                          ' : 'ARROWS MOVE  SPACE JUMPS');
     text(t, 4, 28, tapping ? '   TAP TO START    ' : 'PRESS JUMP TO START');
     text(t, 1, 30, `MODE ${LEVELS[level].name}  ${tapping ? 'COG  ' : 'C KEY'}`);
+    text(t, 1, 31, `LIVES ${endless ? 'UNLIMITED' : '3        '}   ${tapping ? '     ' : 'L KEY'}`);
   }
   drawTitleText();
 
@@ -130,7 +142,7 @@ async function main() {
     game.m[0x60b8] = parseInt(hs.slice(4, 6), 16);
     game.m[0x60b9] = parseInt(hs.slice(2, 4), 16);
     game.m[0x60ba] = parseInt(hs.slice(0, 2), 16);
-    assisted = level > 0;
+    assisted = level > 0 || endless;
     applyAssists();
     mode = 'game';
     paused = false;
@@ -160,7 +172,7 @@ async function main() {
 
   function step(in0) {
     const L = LEVELS[level], m = game.m;
-    if (L.endless && m[0x600a] === 0x0e && m[0x6228] <= 1) m[0x6228] = 2;
+    if (endless && m[0x600a] === 0x0e && m[0x6228] <= 1) m[0x6228] = 2;
     if (L.gentle && m[0x600a] === 0x0c) {
       if (m[0x6380] > 1) m[0x6380] = 1;     // enemies stay at the calmest difficulty
       m[0x6220] = 0;                         // falls never count as too far
@@ -204,6 +216,7 @@ async function main() {
 
     if (mode === 'title') {
       if (keyboard.consume('KeyC')) setLevel((level + 1) % LEVELS.length);
+      if (keyboard.consume('KeyL')) setEndless(!endless);
       if (fire) startNewGame();
       titleT++;
       if (titleT % 32 === 0) {

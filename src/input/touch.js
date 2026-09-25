@@ -153,6 +153,7 @@ export class Touch {
         <label>Opacity <input name="opacity" type="range" min="0.1" max="0.9" step="0.05"></label>
         <label><input name="swap" type="checkbox"> Jump on the left (left-handed)</label>
         <label>Difficulty <select class="tc-level"><option value="0">Normal (like the arcade)</option><option value="1">Easy</option><option value="2">Super easy</option></select></label>
+        <label><input class="tc-lives" type="checkbox"> Unlimited lives</label>
         <button class="tc-close" type="button">Done</button>
       </div>`;
     this.pad = el.querySelector('.tc-pad');
@@ -165,13 +166,16 @@ export class Touch {
     this.levelBox = el.querySelector('.tc-level');
     this.onLevel = null; // main.js owns the difficulty setting
     this.levelBox.addEventListener('change', () => this.onLevel?.(Number(this.levelBox.value)));
+    this.livesBox = el.querySelector('.tc-lives');
+    this.onLives = null; // main.js owns this too
+    this.livesBox.addEventListener('change', () => this.onLives?.(this.livesBox.checked));
     const stop = (e) => e.stopPropagation();
     for (const n of [this.gear, this.panel]) for (const ev of ['pointerdown', 'pointerup', 'pointermove']) n.addEventListener(ev, stop);
     this.gear.addEventListener('click', () => this.openPanel(true));
     el.querySelector('.tc-close').addEventListener('click', () => this.openPanel(false));
     this.panel.addEventListener('input', (e) => {
       const f = e.target;
-      if (!f.name) return; // the difficulty box is not a touch setting
+      if (!f.name) return; // difficulty and lives are game settings, not touch ones
       this.settings[f.name] = f.type === 'checkbox' ? f.checked : f.type === 'range' ? Number(f.value) : f.value;
       save(this.settings);
       this.applySettings();
@@ -179,6 +183,7 @@ export class Touch {
   }
 
   setLevel(n) { this.levelBox.value = String(n); }
+  setLives(on) { this.livesBox.checked = on; }
 
   openPanel(open) {
     this.panel.hidden = !open;

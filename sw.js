@@ -1,6 +1,6 @@
 // Service worker: caches the whole app on install so it launches offline.
 // Bump VERSION whenever any file changes, so clients pick up the new build.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = `kong-${VERSION}`;
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest', 'data/tables.json',

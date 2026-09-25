@@ -19,7 +19,8 @@ Open the site, then on iPad: Share → **Add to Home Screen**.
 - Difficulty (C on the title screen, or under ⚙); only Normal games set the high score:
   - Normal: the arcade exactly
   - Easy: 70% speed, falls don't hurt, calmest enemies, no time-out, jump with the hammer, steer in mid-air
-  - Super easy: as Easy at 55% speed, plus barrels and fire can't hurt Mario and lives never run out
+  - Super easy: as Easy at 55% speed, plus barrels and fire can't hurt Mario
+- Unlimited lives (L on the title screen, or under ⚙), with any difficulty; those games don't set the high score
 
 ## Develop
 
