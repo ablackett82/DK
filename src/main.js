@@ -11,6 +11,12 @@ import { Gamepad } from './input/gamepad.js';
 import { Touch } from './input/touch.js';
 
 const STEP = 1 / FRAME_HZ;
+// difficulty levels: 0 the arcade exactly, 1 easy, 2 super easy
+const LEVELS = [
+  { name: 'NORMAL    ', speed: 1 },
+  { name: 'EASY      ', speed: 0.7, gentle: true },
+  { name: 'SUPER EASY', speed: 0.55, gentle: true, invincible: true, endless: true },
+];
 const MAX_CATCHUP = 0.1;
 const STORE = 'dk.';
 
@@ -34,25 +40,31 @@ async function main() {
   const gamepad = new Gamepad();
   const touch = new Touch(document.getElementById('touch'));
 
-  let cheat = store.get('cheat', '0') === '1';
+  let level = Math.min(2, Number(store.get('level', 0)) || 0);
   let highScore = Number(store.get('highscore', 7650));
   let mode = 'title';           // title | game
   let paused = false;
-  let game = null, cheated = false;
+  let game = null, assisted = false;
   let title = makeTitle();
   let titleT = 0;
   let acc = 0, last = performance.now();
 
-  touch.setCheat(cheat);
+  touch.setLevel(level);
   touch.onPanelToggle = (open) => { if (mode === 'game') paused = open; };
-  touch.onCheatToggle = (on) => setCheat(on);
+  touch.onLevel = (n) => setLevel(n);
 
-  function setCheat(on) {
-    cheat = on;
-    store.set('cheat', on ? 1 : 0);
-    touch.setCheat(on);
-    if (on && game) cheated = true;
+  function setLevel(n) {
+    level = n;
+    store.set('level', n);
+    touch.setLevel(n);
+    if (game) { applyAssists(); if (n) assisted = true; }
     drawTitleText();
+  }
+
+  function applyAssists() {
+    const L = LEVELS[level];
+    game.assist.hammerJump = !!L.gentle;
+    game.assist.invincible = !!L.invincible;
   }
 
   // ---- input ----
@@ -106,7 +118,7 @@ async function main() {
     const tapping = touch.active;
     text(t, 1, 4, tapping ? '                          ' : 'ARROWS MOVE  SPACE JUMPS');
     text(t, 4, 28, tapping ? '   TAP TO START    ' : 'PRESS JUMP TO START');
-    text(t, 3, 30, `CHEAT MODE ${cheat ? 'ON ' : 'OFF'}  ${tapping ? 'COG  ' : 'C KEY'}`);
+    text(t, 1, 30, `MODE ${LEVELS[level].name}  ${tapping ? 'COG  ' : 'C KEY'}`);
   }
   drawTitleText();
 
@@ -118,7 +130,8 @@ async function main() {
     game.m[0x60b8] = parseInt(hs.slice(4, 6), 16);
     game.m[0x60b9] = parseInt(hs.slice(2, 4), 16);
     game.m[0x60ba] = parseInt(hs.slice(0, 2), 16);
-    cheated = cheat;
+    assisted = level > 0;
+    applyAssists();
     mode = 'game';
     paused = false;
     acc = 0;
@@ -132,7 +145,7 @@ async function main() {
   }
 
   function endGame() {
-    if (game && !cheated) {
+    if (game && !assisted) {
       highScore = Math.max(highScore, score(game));
       store.set('highscore', highScore);
     }
@@ -146,8 +159,19 @@ async function main() {
   }
 
   function step(in0) {
-    // cheat mode: lives never run out
-    if (cheat && game.m[0x600a] === 0x0e && game.m[0x6228] <= 1) game.m[0x6228] = 2;
+    const L = LEVELS[level], m = game.m;
+    if (L.endless && m[0x600a] === 0x0e && m[0x6228] <= 1) m[0x6228] = 2;
+    if (L.gentle && m[0x600a] === 0x0c) {
+      if (m[0x6380] > 1) m[0x6380] = 1;     // enemies stay at the calmest difficulty
+      m[0x6220] = 0;                         // falls never count as too far
+      if (m[0x6386]) m[0x6386] = 0;          // running out of time isn't fatal
+      // steer in mid-air, a pixel every other frame
+      if (m[0x6216] === 1 && (m[0x601a] & 1)) {
+        const x = m[0x6203];
+        if ((in0 & IN_RIGHT) && x < 0xe9) { m[0x6203] = x + 1; m[0x6207] |= 0x80; }
+        else if ((in0 & IN_LEFT) && x > 0x17) { m[0x6203] = x - 1; m[0x6207] &= 0x7f; }
+      }
+    }
     game.frame(in0);
     if (game.gameOver) endGame();
   }
@@ -179,7 +203,7 @@ async function main() {
     if (keyboard.consume('KeyM')) sound.setMuted(!sound.muted);
 
     if (mode === 'title') {
-      if (keyboard.consume('KeyC')) setCheat(!cheat);
+      if (keyboard.consume('KeyC')) setLevel((level + 1) % LEVELS.length);
       if (fire) startNewGame();
       titleT++;
       if (titleT % 32 === 0) {
@@ -195,7 +219,8 @@ async function main() {
       else {
         if (!paused) {
           acc += dt;
-          while (acc >= STEP && game) { step(in0); acc -= STEP; }
+          const stepT = STEP / LEVELS[level].speed;
+          while (acc >= stepT && game) { step(in0); acc -= stepT; }
           if (game) sound.update(game);
         }
         if (game) image.data.set(screen.draw(game));

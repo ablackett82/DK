@@ -152,7 +152,7 @@ export class Touch {
         <label>Size <input name="size" type="range" min="0.6" max="1.6" step="0.1"></label>
         <label>Opacity <input name="opacity" type="range" min="0.1" max="0.9" step="0.05"></label>
         <label><input name="swap" type="checkbox"> Jump on the left (left-handed)</label>
-        <label><input class="tc-cheat" type="checkbox"> Cheat mode (lives never run out)</label>
+        <label>Difficulty <select class="tc-level"><option value="0">Normal (like the arcade)</option><option value="1">Easy</option><option value="2">Super easy</option></select></label>
         <button class="tc-close" type="button">Done</button>
       </div>`;
     this.pad = el.querySelector('.tc-pad');
@@ -162,23 +162,23 @@ export class Touch {
     this.panel = el.querySelector('.tc-panel');
     this.gear = el.querySelector('.tc-gear');
     this.onPanelToggle = null; // main.js hooks this to pause the game
-    this.cheatBox = el.querySelector('.tc-cheat');
-    this.onCheatToggle = null; // main.js owns the cheat setting
-    this.cheatBox.addEventListener('change', () => this.onCheatToggle?.(this.cheatBox.checked));
+    this.levelBox = el.querySelector('.tc-level');
+    this.onLevel = null; // main.js owns the difficulty setting
+    this.levelBox.addEventListener('change', () => this.onLevel?.(Number(this.levelBox.value)));
     const stop = (e) => e.stopPropagation();
     for (const n of [this.gear, this.panel]) for (const ev of ['pointerdown', 'pointerup', 'pointermove']) n.addEventListener(ev, stop);
     this.gear.addEventListener('click', () => this.openPanel(true));
     el.querySelector('.tc-close').addEventListener('click', () => this.openPanel(false));
     this.panel.addEventListener('input', (e) => {
       const f = e.target;
-      if (!f.name) return; // the cheat box is not a touch setting
+      if (!f.name) return; // the difficulty box is not a touch setting
       this.settings[f.name] = f.type === 'checkbox' ? f.checked : f.type === 'range' ? Number(f.value) : f.value;
       save(this.settings);
       this.applySettings();
     });
   }
 
-  setCheat(on) { this.cheatBox.checked = on; }
+  setLevel(n) { this.levelBox.value = String(n); }
 
   openPanel(open) {
     this.panel.hidden = !open;

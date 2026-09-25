@@ -109,7 +109,7 @@ export function moveMario(g) {
   const m = g.m;
   if (m[0x6216] === 1) return jumping(g);
   if (m[0x621e] !== 0) return landingPause(g);
-  if (m[0x6217] !== 1) {
+  if (m[0x6217] !== 1 || g.assist.hammerJump) {
     if (m[0x6215] === 1) return onLadder(g);
     if (m[0x6010] & 0x80) return startJump(g);
   }
@@ -154,7 +154,8 @@ function landingPause(g) {
   const m = g.m;
   m[0x621e] = (m[0x621e] - 1) & 0xff;
   if (m[0x621e] !== 0) return;
-  m[0x6217] = m[0x6218];
+  // (easy mode: a jump taken while holding the hammer doesn't drop it)
+  m[0x6217] = m[0x6218] || (g.assist.hammerJump ? m[0x6217] : 0);
   m[0x6207] &= 0x80;
   m[0x6202] = 0;
   updateSprite(g);

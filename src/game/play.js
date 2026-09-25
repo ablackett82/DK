@@ -171,7 +171,7 @@ function hammerHits(g) {
 /** $2808 */
 function collisions(g) {
   const m = g.m;
-  if (hostileHit(g, 0x6200, m[0x6205], 4, 7).a) m[0x6200] = 0;
+  if (hostileHit(g, 0x6200, m[0x6205], 4, 7).a && !g.assist.invincible) m[0x6200] = 0;
 }
 
 // ---------------------------------------------------------------------------

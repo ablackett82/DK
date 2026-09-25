@@ -46,6 +46,8 @@ export class Machine {
     this.paletteA = 0;           // $7D86
     this.paletteB = 0;           // $7D87
     this.flip = 1;               // $7D82
+    // helpers for the easier modes (off = the arcade exactly)
+    this.assist = { hammerJump: false, invincible: false };
   }
 
   /**

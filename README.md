@@ -16,7 +16,10 @@ Open the site, then on iPad: Share → **Add to Home Screen**.
 - Keyboard: arrows / WASD to move, Space / Z / Enter to jump; P pause, M mute, F fullscreen, Esc quit
 - Touch: left half = d-pad, right half = jump (⚙ for settings)
 - Gamepad / controller: d-pad or left stick, any face button jumps
-- Cheat mode (C on the title screen, or under ⚙): lives never run out; cheat games don't set the high score
+- Difficulty (C on the title screen, or under ⚙); only Normal games set the high score:
+  - Normal: the arcade exactly
+  - Easy: 70% speed, falls don't hurt, calmest enemies, no time-out, jump with the hammer, steer in mid-air
+  - Super easy: as Easy at 55% speed, plus barrels and fire can't hurt Mario and lives never run out
 
 ## Develop
 
