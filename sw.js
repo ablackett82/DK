@@ -1,9 +1,9 @@
 // Service worker: caches the whole app on install so it launches offline.
 // Bump VERSION whenever any file changes, so clients pick up the new build.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `kong-${VERSION}`;
 const FILES = [
-  './', 'index.html', 'style.css', 'manifest.webmanifest', 'data/tables.json',
+  './', 'index.html', 'moved.js', 'style.css', 'manifest.webmanifest', 'data/tables.json',
   'src/main.js',
   'src/game/machine.js', 'src/game/core.js', 'src/game/flow.js', 'src/game/stage.js', 'src/game/play.js',
   'src/game/mario.js', 'src/game/barrels.js', 'src/game/hazards.js',
@@ -17,7 +17,7 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith(CACHE.slice(0, -VERSION.length)) && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 // cache first, falling back to the network (and caching what it returns)
